@@ -149,7 +149,7 @@ namespace Services.Implementation
         {
             try
             {
-                var booking = await _unitOfWork.Bookings.GetQueryable(x => x.Id == id).FirstOrDefaultAsync();
+                var booking = await _unitOfWork.Bookings.Find(id);
                 if (booking != null)
                 {
                     await _unitOfWork.Bookings.Remove(booking);

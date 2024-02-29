@@ -6,6 +6,8 @@ using Model.ViewModel.RequestVMs;
 using Model.ViewModel;
 using Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Model.Models.RequestModels;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace CabsAPI.Controllers
 {
@@ -16,10 +18,12 @@ namespace CabsAPI.Controllers
     {
         private readonly IBookingService _booking;
         private readonly IUnitOfWork _unitOfWork;
-        public BookingController(IBookingService booking, IUnitOfWork unitOfWork)
+        private readonly IMailService _mailService;
+        public BookingController(IBookingService booking,  IUnitOfWork unitOfWork, IMailService mailService)
         {
             _booking = booking;
             _unitOfWork = unitOfWork;
+            _mailService = mailService;
         }
 
         [Route("[action]")]
@@ -92,6 +96,20 @@ namespace CabsAPI.Controllers
             else
             {
                 return BadRequest(ResultFormat.ErrorResult(result.Response, "Booking Management", ""));
+            }
+        }
+        [Route("[action]")]
+        [HttpPost]
+        public async Task<IActionResult> ContactUs(MailRequest request)
+        {
+            try
+            {
+                await _mailService.SendEmailAsync(request);
+                return Ok("successfull");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
     }
