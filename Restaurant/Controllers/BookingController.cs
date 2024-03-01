@@ -100,16 +100,19 @@ namespace CabsAPI.Controllers
         }
         [Route("[action]")]
         [HttpPost]
-        public async Task<IActionResult> ContactUs(MailRequest request)
+        public async Task<IActionResult> ContactUs(ContactUsRequest request)
         {
-            try
+            if (!ModelState.IsValid)
+                return BadRequest(ResultFormat.ExistResult(ModelState.Keys.SelectMany(k => ModelState[k].Errors)
+                                           .Select(m => m.ErrorMessage).ToArray(), "Email  Management"));
+            var result = await _mailService.ContactUsAsync(request);
+            if (result.IsSuccess)
             {
-                await _mailService.SendEmailAsync(request);
-                return Ok("successfull");
+                return Ok(ResultFormat.SuccessResult(result.Response, "Email Management", "", "redrawBooking", 1));
             }
-            catch (Exception ex)
+            else
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ResultFormat.ErrorResult(result.Response, "Email Management", ""));
             }
         }
     }

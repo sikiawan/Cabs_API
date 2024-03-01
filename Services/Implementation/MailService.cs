@@ -8,6 +8,7 @@ using Model.Models;
 using Model.Models.RequestModels;
 using Services.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 namespace Services.Implementation
 {
@@ -56,6 +57,47 @@ namespace Services.Implementation
             await smtp.SendAsync(email);
             smtp.Disconnect(true);
             
+        }
+
+        public async Task<ResponseManager> ContactUsAsync(ContactUsRequest contactUsRequest)
+        {
+            try
+            {
+                var mailContent = new MailRequest
+                {
+                    ToEmail = "ayaz.mehmood4070@gmail.com",
+                    Subject = contactUsRequest.Subject,
+                    Body = "From: '"+ contactUsRequest.Email+"' " + contactUsRequest.Body
+                };
+
+                var email = new MimeMessage();
+                email.Sender = MailboxAddress.Parse(_mailSettings.Mail);
+                email.To.Add(MailboxAddress.Parse(_mailSettings.receivingEmail));
+                email.Subject = mailContent.Subject;
+                var builder = new BodyBuilder();
+                var password = Encoding.UTF8.GetString(Convert.FromBase64String(_mailSettings.Password));
+
+                builder.HtmlBody = mailContent.Body;
+                email.Body = builder.ToMessageBody();
+                using var smtp = new SmtpClient();
+                smtp.Connect(_mailSettings.Host, _mailSettings.Port, SecureSocketOptions.StartTls);
+                smtp.Authenticate(_mailSettings.Mail, password);
+                await smtp.SendAsync(email);
+                smtp.Disconnect(true);
+                return new ResponseManager
+                {
+                    IsSuccess = true,
+                    Response = "we will get back to you as soon as possible"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseManager
+                {
+                    IsSuccess = false,
+                    Response = ex.Message
+                };
+            }
         }
         //public async Task SendEmailAsync(string toEmail, string subject, string content)
         //{
